@@ -94,7 +94,7 @@ function ElderlyDetail() {
               <HealthOverview health={health} />
 
               <section className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <BehaviorBaseline />
+                <BehaviorBaseline elderId={elderly.id} />
 
                 <DeviceStatus devices={devices} />
               </section>

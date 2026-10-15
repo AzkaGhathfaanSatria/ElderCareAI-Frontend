@@ -21,6 +21,7 @@ export interface BackendElder {
 
 export interface BackendDevice {
   id: string;
+  deviceKey?: string | undefined;
   deviceId?: string | undefined;
   type?: string | undefined;
   kind?: string | undefined;
@@ -105,7 +106,7 @@ function errorMessage(body: unknown, fallback: string): string {
   return fallback;
 }
 
-function getStoredToken(): string | null {
+export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
 }
@@ -248,12 +249,17 @@ export async function getDevices(): Promise<BackendDevice[]> {
 
 export async function createWearable(input: Record<string, unknown>): Promise<BackendDevice> {
   const body = await backendFetch<unknown>("/devices/wearables", { method: "POST", body: JSON.stringify(input) });
-  return normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
+  const device = normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
+  // Device key hanya dikirim backend sekali saat wearable dibuat.
+  const deviceKey = isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
+  return deviceKey ? { ...device, deviceKey } : device;
 }
 
 export async function createCamera(input: Record<string, unknown>): Promise<BackendDevice> {
   const body = await backendFetch<unknown>("/devices/cameras", { method: "POST", body: JSON.stringify(input) });
-  return normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
+  const device = normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
+  const deviceKey = isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
+  return deviceKey ? { ...device, deviceKey } : device;
 }
 
 export async function pairDevice(deviceId: string, elderId: string) {
@@ -326,6 +332,53 @@ export async function deleteUser(id: string) {
 export async function updateAlert(alertId: string, input: Record<string, unknown>) {
   return backendFetch(`/alerts/${encodeURIComponent(alertId)}`, { method: "PATCH", body: JSON.stringify(input) });
 }
+
+export interface BaselineFeature {
+  key: string;
+  label: string;
+  unit: string;
+  normal: number | null;
+  current: number | null;
+  status: "Normal" | "Berubah" | null;
+}
+
+export interface BaselineInfo {
+  status: "belajar" | "aktif";
+  aiEnabled: boolean;
+  daysCollected: number;
+  daysRequired: number;
+  samples: number;
+  samplesRequired: number;
+  updatedAt: string | null;
+  zThreshold: number | null;
+  fitur: BaselineFeature[];
+}
+
+export async function getElderBaseline(elderId: string): Promise<BaselineInfo> {
+  return backendFetch<BaselineInfo>(`/elders/${encodeURIComponent(elderId)}/baseline`);
+}
+
+export async function trainElderBaseline(elderId: string): Promise<BaselineInfo> {
+  return backendFetch<BaselineInfo>(`/elders/${encodeURIComponent(elderId)}/baseline/train`, { method: "POST" });
+}
+
+export async function markNotificationRead(id: string) {
+  return backendFetch(`/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH" });
+}
+
+export async function markAllNotificationsRead() {
+  return backendFetch("/notifications/read-all", { method: "POST" });
+}
+
+/** Buat device key baru untuk wearable atau kamera (key lama langsung tidak berlaku). Key hanya dikirim sekali. */
+export async function rotateDeviceKey(deviceId: string): Promise<string> {
+  const body = await backendFetch<unknown>(`/devices/${encodeURIComponent(deviceId)}/rotate-key`, { method: "POST" });
+  const key = isObject(body) ? body.deviceKey : undefined;
+  if (typeof key !== "string") throw new Error("Backend tidak mengirim device key.");
+  return key;
+}
+
+export const rotateWearableKey = rotateDeviceKey;
 
 export async function confirmFall(fallId: string, confirmed: boolean) {
   return backendFetch(`/falls/${encodeURIComponent(fallId)}/confirm`, {
@@ -466,6 +519,9 @@ function normalizeMonitoringData(elder: BackendElder, summary: unknown, devices:
       value: pickNumber(item, "value", "activity", "aktivitas") ?? 0,
     })),
     alert: {
+      id: pickString(alert, "id"),
+      fallId: pickString(alert, "fallId"),
+      status: pickString(alert, "status"),
       hasAlert: Boolean(root.hasAlert ?? alert.hasAlert ?? alert.id ?? alert.status),
       type: pickString(alert, "type", "jenis", "title", "judul") ?? "Peringatan",
       description: pickString(alert, "description", "deskripsi", "message", "pesan") ?? "",

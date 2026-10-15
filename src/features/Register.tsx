@@ -76,7 +76,7 @@ function Register() {
     } catch (err) {
       setError(
         err instanceof TypeError
-          ? "Tidak dapat terhubung ke server. Pastikan backend berjalan."
+          ? "Tidak dapat terhubung ke server. Periksa koneksi internet atau coba beberapa saat lagi."
           : err instanceof Error
             ? err.message
             : "Registrasi gagal. Coba lagi.",

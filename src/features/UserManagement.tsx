@@ -42,7 +42,7 @@ function UserManagement() {
     try {
       await createUser(form);
       await queryClient.invalidateQueries({ queryKey: ["users"] });
-      setForm(emptyForm); setIsFormOpen(false); setSuccess("Pengguna berhasil dibuat di backend.");
+      setForm(emptyForm); setIsFormOpen(false); setSuccess("Pengguna berhasil dibuat.");
     } catch (e) { setError(e instanceof Error ? e.message : "Gagal membuat pengguna."); }
   };
 
@@ -58,7 +58,7 @@ function UserManagement() {
   };
 
   return <div className="min-h-screen bg-paper"><TopNav /><main className="min-w-0"><div className="p-4 sm:p-6 lg:p-8">
-    <ManagementHeader title="Manajemen Pengguna" description="CRUD akun Keluarga/Caregiver, Tenaga Medis, dan Admin melalui backend Express." isFormOpen={isFormOpen} onToggleForm={() => { setError(""); setSuccess(""); setIsFormOpen((open) => !open); }} openLabel="+ Tambah Pengguna" />
+    <ManagementHeader title="Manajemen Pengguna" description="Kelola akun Keluarga/Caregiver, Tenaga Medis, dan Admin." isFormOpen={isFormOpen} onToggleForm={() => { setError(""); setSuccess(""); setIsFormOpen((open) => !open); }} openLabel="+ Tambah Pengguna" />
     {success && <div className="mb-5 rounded-lg border-l-4 border-safe bg-safe/8 p-4 text-sm text-safe" role="status">{success}</div>}
     {error && <div className="mb-5 rounded-lg border border-danger/25 bg-danger/6 px-4 py-3 text-sm text-danger" role="alert">{error}</div>}
     {isFormOpen && <Card className="mb-6 p-5 sm:p-6"><h2 className="mb-4 font-serif text-base text-ink">Tambah Pengguna Baru</h2><form onSubmit={submit} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><TextField id="name" name="name" label="Nama Lengkap" value={form.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm((v)=>({...v,name:e.target.value}))} /><TextField id="email" name="email" label="Email" type="email" value={form.email} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm((v)=>({...v,email:e.target.value}))} /><TextField id="password" name="password" label="Password Awal" type="password" value={form.password} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm((v)=>({...v,password:e.target.value}))} /></div><div className="max-w-md"><p className="mb-2 text-sm font-semibold text-ink-soft">Role</p><div className="flex gap-1.5 rounded-lg bg-paper p-1">{(Object.keys(roleDisplay) as UserRole[]).map((role)=><button key={role} type="button" onClick={()=>setForm((v)=>({...v,role}))} className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold ${form.role===role?"bg-surface text-ink shadow-[var(--shadow-card)]":"text-muted hover:text-ink-soft"}`}>{roleDisplay[role]}</button>)}</div></div><div className="flex justify-end"><Button type="submit" variant="accent" size="sm">Simpan Pengguna</Button></div></form></Card>}

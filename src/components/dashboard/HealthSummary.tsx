@@ -1,5 +1,6 @@
 import type { Health } from "../../types/elderCare";
 import Badge from "../ui/Badge";
+import { activityStatus, heartRateStatus, riskStatus, sleepStatus, valueOrDash } from "../../lib/healthStatus";
 import Card from "../ui/Card";
 
 interface HealthSummaryProps {
@@ -7,6 +8,11 @@ interface HealthSummaryProps {
 }
 
 function HealthSummary({ health }: HealthSummaryProps) {
+  const hr = heartRateStatus(health.heartRate);
+  const activity = activityStatus(health.activity);
+  const sleep = sleepStatus(health.sleep);
+  const risk = riskStatus(health.risk);
+
   return (
     <section
       className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -17,12 +23,12 @@ function HealthSummary({ health }: HealthSummaryProps) {
 
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <p className="text-3xl font-bold text-ink">{health.heartRate}</p>
+            <p className="text-3xl font-bold text-ink">{valueOrDash(health.heartRate)}</p>
 
             <p className="mt-1 text-xs text-muted">{health.heartRateUnit}</p>
           </div>
 
-          <Badge variant="success">Normal</Badge>
+          <Badge variant={hr.variant}>{hr.label}</Badge>
         </div>
       </Card>
 
@@ -36,7 +42,7 @@ function HealthSummary({ health }: HealthSummaryProps) {
             <p className="mt-1 text-xs text-muted">Hari ini</p>
           </div>
 
-          <Badge variant="info">Aktif</Badge>
+          <Badge variant={activity.variant}>{activity.label}</Badge>
         </div>
       </Card>
 
@@ -45,12 +51,12 @@ function HealthSummary({ health }: HealthSummaryProps) {
 
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <p className="text-3xl font-bold text-ink">{health.sleep}</p>
+            <p className="text-3xl font-bold text-ink">{valueOrDash(health.sleep)}</p>
 
             <p className="mt-1 text-xs text-muted">{health.sleepUnit}</p>
           </div>
 
-          <Badge variant="success">Baik</Badge>
+          <Badge variant={sleep.variant}>{sleep.label}</Badge>
         </div>
       </Card>
 
@@ -64,7 +70,7 @@ function HealthSummary({ health }: HealthSummaryProps) {
             <p className="mt-1 text-xs text-muted">Berdasarkan monitoring</p>
           </div>
 
-          <Badge variant="success">Aman</Badge>
+          <Badge variant={risk.variant}>{risk.label}</Badge>
         </div>
       </Card>
     </section>

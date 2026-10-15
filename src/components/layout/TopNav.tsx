@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useUnreadNotifications } from "../../hooks/useUnreadNotifications";
 
 import { useSession } from "../../hooks/useSession";
 import { logout } from "../../services/backendApi";
@@ -20,6 +21,9 @@ function TopNav({ hasNotification = false }: TopNavProps) {
   const sessionQuery = useSession();
   const queryClient = useQueryClient();
   const user = sessionQuery.data;
+  // Sumber kebenaran lonceng: notifikasi belum dibaca. Prop hanya dipakai selagi data belum termuat.
+  const unread = useUnreadNotifications(Boolean(user));
+  const showBell = unread === undefined ? hasNotification : unread > 0;
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -278,7 +282,7 @@ function TopNav({ hasNotification = false }: TopNavProps) {
               ♢
             </span>
 
-            {hasNotification && (
+            {showBell && (
               <span
                 className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger"
                 role="status"

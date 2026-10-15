@@ -62,7 +62,7 @@ function LoginPage() {
       setFormState({
         status: "error",
         message: isNetwork
-          ? "Tidak dapat terhubung ke server. Pastikan backend berjalan."
+          ? "Tidak dapat terhubung ke server. Periksa koneksi internet atau coba beberapa saat lagi."
           : err instanceof Error
             ? err.message
             : "Login gagal. Coba lagi.",
@@ -143,8 +143,18 @@ function LoginPage() {
               placeholder="Masukkan password"
               autoComplete="current-password"
               aria-label="Password pengguna"
-              wrapperClassName="mb-6"
+              wrapperClassName="mb-2"
             />
+
+            <div className="mb-6 text-right">
+              <button
+                type="button"
+                onClick={() => router.push("/forgot-password")}
+                className="text-sm font-medium text-accent-dark underline-offset-2 hover:underline"
+              >
+                Lupa password?
+              </button>
+            </div>
 
             <button
               type="submit"
@@ -170,8 +180,8 @@ function LoginPage() {
           </div>
 
           <div className="mt-7 rounded-xl border border-dashed border-border bg-paper px-4 py-3">
-            <p className="text-xs font-semibold text-ink-soft">Autentikasi backend</p>
-            <p className="mt-1 text-xs leading-5 text-muted">Gunakan akun yang terdaftar pada Express API. Kredensial demo tidak lagi disimpan di frontend.</p>
+            <p className="text-xs font-semibold text-ink-soft">Masuk ke akunmu</p>
+            <p className="mt-1 text-xs leading-5 text-muted">Gunakan email dan password yang kamu daftarkan. Lupa password? Pilih "Lupa password?" di atas.</p>
           </div>
         </div>
 

@@ -20,19 +20,23 @@ export function useElderlyMutation() {
       });
       const elderId = elder.id;
       if (!elderId) throw new Error("Backend tidak mengembalikan ID lansia.");
+      // Device key hanya dikirim backend sekali saat perangkat dibuat, jadi harus ditampilkan ke pengguna.
+      const deviceKeys: { label: string; key: string }[] = [];
 
       if (input.wearableId) {
         const wearable = await createWearable({ deviceId: input.wearableId, id_wearable: input.wearableId, type: input.wearableType, tipe: input.wearableType, elderId, id_lansia: elderId });
         const wearableId = wearable.id || input.wearableId;
         await pairDevice(wearableId, elderId);
+        if (wearable.deviceKey) deviceKeys.push({ label: `Wearable ${input.wearableId}`, key: wearable.deviceKey });
       }
 
       if (input.cameraId) {
         const camera = await createCamera({ deviceId: input.cameraId, id_kamera: input.cameraId, type: input.cameraType, tipe: input.cameraType, elderId, id_lansia: elderId });
         const cameraId = camera.id || input.cameraId;
         await pairDevice(cameraId, elderId);
+        if (camera.deviceKey) deviceKeys.push({ label: `Kamera ${input.cameraId}`, key: camera.deviceKey });
       }
-      return elder;
+      return { elder, deviceKeys };
     },
     onSuccess: async () => {
       await Promise.all([

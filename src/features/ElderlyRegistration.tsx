@@ -31,8 +31,21 @@ function ElderlyRegistration() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deviceKeys, setDeviceKeys] = useState<{ label: string; key: string }[]>([]);
+  const [copiedKey, setCopiedKey] = useState("");
 
-  const isLoading = elderlyMutation.isPending;
+  const copyDeviceKey = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey(""), 2000);
+    } catch {
+      setError("Tidak bisa menyalin otomatis. Blok dan salin key secara manual.");
+    }
+  };
+
+  // Setelah berhasil dan key ditampilkan, form dikunci supaya tidak terkirim dua kali.
+  const isLoading = elderlyMutation.isPending || deviceKeys.length > 0;
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
@@ -63,7 +76,14 @@ function ElderlyRegistration() {
     }
 
     try {
-      await elderlyMutation.mutateAsync(result.data);
+      const { deviceKeys: keys } = await elderlyMutation.mutateAsync(result.data);
+
+      if (keys.length > 0) {
+        // Jangan redirect otomatis: key hanya tampil sekali dan harus sempat disalin.
+        setDeviceKeys(keys);
+        setSuccess("Data lansia berhasil didaftarkan. Simpan device key di bawah ini sekarang, hanya ditampilkan sekali.");
+        return;
+      }
 
       setSuccess("Data lansia berhasil didaftarkan. Mengarahkan ke halaman data lansia...");
 
@@ -151,6 +171,27 @@ function ElderlyRegistration() {
               </span>
 
               <p>{success}</p>
+            </div>
+          )}
+
+          {deviceKeys.length > 0 && (
+            <div className="mb-6 space-y-3 rounded-xl border border-warn/40 bg-warn/8 p-4" role="status">
+              {deviceKeys.map((item) => (
+                <div key={item.key}>
+                  <p className="text-sm font-semibold text-ink">Device key {item.label}</p>
+                  <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <code className="min-w-0 flex-1 break-all rounded-md border border-border bg-paper px-3 py-2 text-xs text-ink select-all">
+                      {item.key}
+                    </code>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => copyDeviceKey(item.key)}>
+                      {copiedKey === item.key ? "Tersalin ✓" : "Salin"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="accent" size="sm" onClick={() => router.push("/elderly")}>
+                Lanjut ke Data Lansia
+              </Button>
             </div>
           )}
 

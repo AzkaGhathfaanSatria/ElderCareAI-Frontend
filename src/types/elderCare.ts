@@ -31,6 +31,9 @@ export interface ActivityHistoryItem {
 }
 
 export interface AlertData {
+  id?: string | undefined;
+  fallId?: string | undefined;
+  status?: string | undefined;
   hasAlert: boolean;
   type: string;
   description: string;
