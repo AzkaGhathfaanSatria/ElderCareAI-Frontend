@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { SelectField, TextAreaField } from "../components/ui/SelectField";
 import TextField from "../components/ui/TextField";
+import { parseRtsp } from "../components/devices/rtsp";
 import { useElderlyMutation } from "../hooks/useElderlyMutation";
 import {
   type ElderlyRegistrationInput,
@@ -27,6 +28,13 @@ function ElderlyRegistration() {
     wearableId: "",
     cameraType: "",
     cameraId: "",
+    rtsp: "",
+    cameraHost: "",
+    cameraPort: "",
+    cameraUser: "",
+    cameraPassword: "",
+    cameraPath: "",
+    cameraFps: "1",
   });
 
   const [error, setError] = useState("");
@@ -52,10 +60,24 @@ function ElderlyRegistration() {
   ) => {
     const { name, value } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setForm((current) => {
+      if (name === "rtsp") {
+        // URL RTSP lengkap dipecah otomatis ke kolom IP, port, user, password, path
+        const p = parseRtsp(value);
+        return p
+          ? {
+              ...current,
+              rtsp: value,
+              cameraHost: p.host,
+              cameraPort: p.port,
+              cameraUser: p.username,
+              cameraPassword: p.password,
+              cameraPath: p.path,
+            }
+          : { ...current, rtsp: value };
+      }
+      return { ...current, [name]: value };
+    });
 
     setError("");
     setSuccess("");
@@ -75,21 +97,37 @@ function ElderlyRegistration() {
       return;
     }
 
+    const fps = Number(result.data.cameraFps);
+    if (result.data.cameraHost && !(fps >= 0.2 && fps <= 2)) {
+      setError("Frame per detik harus antara 0,2 dan 2.");
+      return;
+    }
+
     try {
-      const { deviceKeys: keys } = await elderlyMutation.mutateAsync(result.data);
+      const { deviceKeys: keys, streamNote } = await elderlyMutation.mutateAsync(result.data);
 
       if (keys.length > 0) {
         // Jangan redirect otomatis: key hanya tampil sekali dan harus sempat disalin.
         setDeviceKeys(keys);
-        setSuccess("Data lansia berhasil didaftarkan. Simpan device key di bawah ini sekarang, hanya ditampilkan sekali.");
+        setSuccess(
+          `Data lansia berhasil didaftarkan. Simpan device key di bawah ini sekarang, hanya ditampilkan sekali. ${streamNote}`.trim(),
+        );
         return;
       }
 
-      setSuccess("Data lansia berhasil didaftarkan. Mengarahkan ke halaman data lansia...");
+      setSuccess(
+        `Data lansia berhasil didaftarkan. ${streamNote} Mengarahkan ke halaman data lansia...`.replace(
+          "  ",
+          " ",
+        ),
+      );
 
-      window.setTimeout(() => {
-        router.push("/elderly");
-      }, 1200);
+      window.setTimeout(
+        () => {
+          router.push("/elderly");
+        },
+        streamNote ? 3500 : 1200,
+      );
     } catch (error: unknown) {
       setError(
         error instanceof Error ? error.message : "Gagal menyimpan data lansia. Silakan coba lagi.",
@@ -175,7 +213,10 @@ function ElderlyRegistration() {
           )}
 
           {deviceKeys.length > 0 && (
-            <div className="mb-6 space-y-3 rounded-xl border border-warn/40 bg-warn/8 p-4" role="status">
+            <div
+              className="mb-6 space-y-3 rounded-xl border border-warn/40 bg-warn/8 p-4"
+              role="status"
+            >
               {deviceKeys.map((item) => (
                 <div key={item.key}>
                   <p className="text-sm font-semibold text-ink">Device key {item.label}</p>
@@ -183,13 +224,23 @@ function ElderlyRegistration() {
                     <code className="min-w-0 flex-1 break-all rounded-md border border-border bg-paper px-3 py-2 text-xs text-ink select-all">
                       {item.key}
                     </code>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => copyDeviceKey(item.key)}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => copyDeviceKey(item.key)}
+                    >
                       {copiedKey === item.key ? "Tersalin ✓" : "Salin"}
                     </Button>
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="accent" size="sm" onClick={() => router.push("/elderly")}>
+              <Button
+                type="button"
+                variant="accent"
+                size="sm"
+                onClick={() => router.push("/elderly")}
+              >
                 Lanjut ke Data Lansia
               </Button>
             </div>
@@ -349,6 +400,97 @@ function ElderlyRegistration() {
                   onChange={handleChange}
                   placeholder="Contoh: CAM-001"
                 />
+              </div>
+
+              <div className="space-y-4 border-t border-border p-5 sm:p-6">
+                <div>
+                  <p className="text-sm font-semibold text-ink">Koneksi stream kamera (RTSP)</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Opsional. Jika IP diisi, stream langsung disambungkan setelah data disimpan.
+                    Bisa juga diisi nanti di halaman Perangkat.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    id="cameraHost"
+                    name="cameraHost"
+                    label="IP kamera"
+                    type="text"
+                    value={form.cameraHost}
+                    onChange={handleChange}
+                    placeholder="192.168.1.7"
+                  />
+                  <TextField
+                    id="cameraFps"
+                    name="cameraFps"
+                    label="Frame per detik"
+                    type="number"
+                    min={0.2}
+                    max={2}
+                    step={0.1}
+                    value={form.cameraFps}
+                    onChange={handleChange}
+                  />
+                  <TextField
+                    id="cameraUser"
+                    name="cameraUser"
+                    label="Username"
+                    type="text"
+                    value={form.cameraUser}
+                    onChange={handleChange}
+                    autoComplete="off"
+                  />
+                  <TextField
+                    id="cameraPassword"
+                    name="cameraPassword"
+                    label="Password"
+                    type="password"
+                    value={form.cameraPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <p className="text-xs text-muted">
+                  Port dan alamat stream dicari otomatis saat disimpan.
+                </p>
+                <details className="text-sm">
+                  <summary className="cursor-pointer text-muted">
+                    Pengaturan lanjutan (biasanya tidak perlu diisi)
+                  </summary>
+                  <div className="mt-3 space-y-4">
+                    <TextField
+                      id="rtsp"
+                      name="rtsp"
+                      label="Tempel URL RTSP (opsional)"
+                      type="text"
+                      value={form.rtsp}
+                      onChange={handleChange}
+                      placeholder="rtsp://user:password@192.168.1.7:8554/Streaming/Channels/101"
+                      autoComplete="off"
+                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        id="cameraPort"
+                        name="cameraPort"
+                        label="Port (kosong = otomatis)"
+                        type="number"
+                        value={form.cameraPort}
+                        onChange={handleChange}
+                        placeholder="otomatis"
+                      />
+                      <TextField
+                        id="cameraPath"
+                        name="cameraPath"
+                        label="Path stream (kosong = otomatis)"
+                        type="text"
+                        value={form.cameraPath}
+                        onChange={handleChange}
+                        placeholder="otomatis"
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
             </Card>
 

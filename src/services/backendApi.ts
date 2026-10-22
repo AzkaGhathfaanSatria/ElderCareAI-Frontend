@@ -1,11 +1,16 @@
 import type { PublicUser, UserRole } from "../types/auth";
 import type { AlertLevel, ElderCareData, ElderlyId } from "../types/elderCare";
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000").replace(/\/$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000").replace(
+  /\/$/,
+  "",
+);
 const ACCESS_TOKEN_KEY = "eldercare_access_token";
 const REFRESH_TOKEN_KEY = "eldercare_refresh_token";
 
-export function getBackendBaseUrl() { return API_BASE_URL; }
+export function getBackendBaseUrl() {
+  return API_BASE_URL;
+}
 
 type JsonObject = Record<string, unknown>;
 
@@ -32,6 +37,7 @@ export interface BackendDevice {
   elderId?: string | undefined;
   elderName?: string | undefined;
   pairedAt?: string | undefined;
+  location?: string | undefined;
 }
 
 export interface BackendNotification {
@@ -140,7 +146,11 @@ function saveRefreshToken(token: string | null) {
   else window.sessionStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
-export async function backendFetch<T = unknown>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
+export async function backendFetch<T = unknown>(
+  path: string,
+  init: RequestInit = {},
+  retry = true,
+): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
@@ -159,12 +169,17 @@ export async function backendFetch<T = unknown>(path: string, init: RequestInit 
   }
 
   const body = await readBody(response);
-  if (!response.ok) throw new Error(errorMessage(body, `Request ${path} gagal (${response.status}).`));
+  if (!response.ok)
+    throw new Error(errorMessage(body, `Request ${path} gagal (${response.status}).`));
   return body as T;
 }
 
 export async function login(input: { email: string; password: string }): Promise<PublicUser> {
-  const body = await backendFetch<unknown>("/auth/login", { method: "POST", body: JSON.stringify(input) }, false);
+  const body = await backendFetch<unknown>(
+    "/auth/login",
+    { method: "POST", body: JSON.stringify(input) },
+    false,
+  );
   const data = unwrap(body);
   saveToken(extractAccessToken(body));
   if (isObject(data) && typeof data.refreshToken === "string") saveRefreshToken(data.refreshToken);
@@ -172,14 +187,32 @@ export async function login(input: { email: string; password: string }): Promise
   return normalizeUser(value);
 }
 
-export async function register(input: { name: string; email: string; password: string; role: UserRole }) {
-  const payload = { nama: input.name, email: input.email, password: input.password, role: input.role };
-  return backendFetch<unknown>("/auth/register", { method: "POST", body: JSON.stringify(payload) }, false);
+export async function register(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}) {
+  const payload = {
+    nama: input.name,
+    email: input.email,
+    password: input.password,
+    role: input.role,
+  };
+  return backendFetch<unknown>(
+    "/auth/register",
+    { method: "POST", body: JSON.stringify(payload) },
+    false,
+  );
 }
 
 export async function logout() {
   try {
-    await backendFetch("/auth/logout", { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) }, false);
+    await backendFetch(
+      "/auth/logout",
+      { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) },
+      false,
+    );
   } finally {
     saveToken(null);
     saveRefreshToken(null);
@@ -188,7 +221,11 @@ export async function logout() {
 
 export async function refreshSession(): Promise<boolean> {
   try {
-    const body = await backendFetch<unknown>("/auth/refresh", { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) }, false);
+    const body = await backendFetch<unknown>(
+      "/auth/refresh",
+      { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) },
+      false,
+    );
     const token = extractAccessToken(body);
     if (token) saveToken(token);
     return true;
@@ -209,11 +246,19 @@ export async function updateMe(input: { name?: string | undefined; email?: strin
 }
 
 export async function requestPasswordReset(email: string) {
-  return backendFetch("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }, false);
+  return backendFetch(
+    "/auth/forgot-password",
+    { method: "POST", body: JSON.stringify({ email }) },
+    false,
+  );
 }
 
 export async function resetPassword(input: { token: string; password: string }) {
-  return backendFetch("/auth/reset-password", { method: "POST", body: JSON.stringify(input) }, false);
+  return backendFetch(
+    "/auth/reset-password",
+    { method: "POST", body: JSON.stringify(input) },
+    false,
+  );
 }
 
 export async function getElders(): Promise<BackendElder[]> {
@@ -222,7 +267,10 @@ export async function getElders(): Promise<BackendElder[]> {
 }
 
 export async function createElder(input: Record<string, unknown>): Promise<BackendElder> {
-  const body = await backendFetch<unknown>("/elders", { method: "POST", body: JSON.stringify(input) });
+  const body = await backendFetch<unknown>("/elders", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   return normalizeElder(isObject(body) && isObject(body.elder) ? body.elder : body);
 }
 
@@ -230,7 +278,11 @@ export async function getElderSummary(elderId: string): Promise<unknown> {
   return backendFetch(`/elders/${encodeURIComponent(elderId)}/summary`);
 }
 
-export async function getElderVitals(elderId: string, from?: string, to?: string): Promise<unknown> {
+export async function getElderVitals(
+  elderId: string,
+  from?: string,
+  to?: string,
+): Promise<unknown> {
   const query = new URLSearchParams();
   if (from) query.set("from", from);
   if (to) query.set("to", to);
@@ -248,17 +300,25 @@ export async function getDevices(): Promise<BackendDevice[]> {
 }
 
 export async function createWearable(input: Record<string, unknown>): Promise<BackendDevice> {
-  const body = await backendFetch<unknown>("/devices/wearables", { method: "POST", body: JSON.stringify(input) });
+  const body = await backendFetch<unknown>("/devices/wearables", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   const device = normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
   // Device key hanya dikirim backend sekali saat wearable dibuat.
-  const deviceKey = isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
+  const deviceKey =
+    isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
   return deviceKey ? { ...device, deviceKey } : device;
 }
 
 export async function createCamera(input: Record<string, unknown>): Promise<BackendDevice> {
-  const body = await backendFetch<unknown>("/devices/cameras", { method: "POST", body: JSON.stringify(input) });
+  const body = await backendFetch<unknown>("/devices/cameras", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   const device = normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
-  const deviceKey = isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
+  const deviceKey =
+    isObject(body) && typeof body.deviceKey === "string" ? body.deviceKey : undefined;
   return deviceKey ? { ...device, deviceKey } : device;
 }
 
@@ -267,6 +327,18 @@ export async function pairDevice(deviceId: string, elderId: string) {
     method: "POST",
     body: JSON.stringify({ elderId }),
   });
+}
+
+/** Ubah nama/ID, lokasi (kamera), atau pindahkan perangkat ke lansia lain tanpa mendaftarkan ulang. */
+export async function updateDevice(
+  deviceId: string,
+  input: { deviceId?: string; lokasi?: string; elderId?: string },
+): Promise<BackendDevice> {
+  const body = await backendFetch<unknown>(`/devices/${encodeURIComponent(deviceId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+  return normalizeDevice(isObject(body) && isObject(body.device) ? body.device : body);
 }
 
 export async function getNotifications(): Promise<BackendNotification[]> {
@@ -298,7 +370,10 @@ export async function getNotificationPreferences(): Promise<JsonObject> {
 }
 
 export async function updateNotificationPreferences(input: Record<string, unknown>) {
-  return backendFetch("/me/notification-preferences", { method: "PUT", body: JSON.stringify(input) });
+  return backendFetch("/me/notification-preferences", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function registerPushToken(token: string, platform = "web") {
@@ -322,7 +397,10 @@ export async function createUser(input: Record<string, unknown>) {
 }
 
 export async function updateUser(id: string, input: Record<string, unknown>) {
-  return backendFetch(`/users/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+  return backendFetch(`/users/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function deleteUser(id: string) {
@@ -330,7 +408,10 @@ export async function deleteUser(id: string) {
 }
 
 export async function updateAlert(alertId: string, input: Record<string, unknown>) {
-  return backendFetch(`/alerts/${encodeURIComponent(alertId)}`, { method: "PATCH", body: JSON.stringify(input) });
+  return backendFetch(`/alerts/${encodeURIComponent(alertId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
 }
 
 export interface BaselineFeature {
@@ -359,7 +440,9 @@ export async function getElderBaseline(elderId: string): Promise<BaselineInfo> {
 }
 
 export async function trainElderBaseline(elderId: string): Promise<BaselineInfo> {
-  return backendFetch<BaselineInfo>(`/elders/${encodeURIComponent(elderId)}/baseline/train`, { method: "POST" });
+  return backendFetch<BaselineInfo>(`/elders/${encodeURIComponent(elderId)}/baseline/train`, {
+    method: "POST",
+  });
 }
 
 export async function markNotificationRead(id: string) {
@@ -372,7 +455,9 @@ export async function markAllNotificationsRead() {
 
 /** Buat device key baru untuk wearable atau kamera (key lama langsung tidak berlaku). Key hanya dikirim sekali. */
 export async function rotateDeviceKey(deviceId: string): Promise<string> {
-  const body = await backendFetch<unknown>(`/devices/${encodeURIComponent(deviceId)}/rotate-key`, { method: "POST" });
+  const body = await backendFetch<unknown>(`/devices/${encodeURIComponent(deviceId)}/rotate-key`, {
+    method: "POST",
+  });
   const key = isObject(body) ? body.deviceKey : undefined;
   if (typeof key !== "string") throw new Error("Backend tidak mengirim device key.");
   return key;
@@ -430,6 +515,7 @@ function normalizeDevice(value: unknown): BackendDevice {
     elderId: pickString(value, "elderId", "elder_id", "id_lansia"),
     elderName: pickString(value, "elderName", "elder_name", "nama_lansia"),
     pairedAt: pickString(value, "pairedAt", "paired_at", "tanggal_pairing"),
+    location: pickString(value, "location", "lokasi"),
   };
 }
 
@@ -464,9 +550,26 @@ function normalizeGrant(value: unknown): BackendAccessGrant {
 /** Data kosong untuk akun yang belum punya lansia: halaman tetap terbuka, angka 0, tanpa error. */
 export function emptyElderCareData(): ElderCareData {
   return {
-    elderly: { id: "" as ElderlyId, name: "", age: 0, monitoringStatus: "Tidak Aktif", wearableStatus: "Terputus" },
-    health: { heartRate: 0, heartRateUnit: "BPM", activity: 0, activityUnit: "%", sleep: 0, sleepUnit: "Jam", risk: "Rendah" },
-    activityHistory: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => ({ day, value: 0 })),
+    elderly: {
+      id: "" as ElderlyId,
+      name: "",
+      age: 0,
+      monitoringStatus: "Tidak Aktif",
+      wearableStatus: "Terputus",
+    },
+    health: {
+      heartRate: 0,
+      heartRateUnit: "BPM",
+      activity: 0,
+      activityUnit: "%",
+      sleep: 0,
+      sleepUnit: "Jam",
+      risk: "Rendah",
+    },
+    activityHistory: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => ({
+      day,
+      value: 0,
+    })),
     alert: { hasAlert: false, type: "", description: "", detected: "", level: "Rendah" },
     devices: [],
     anomalyHistory: [],
@@ -487,14 +590,28 @@ export async function fetchElderCareData(): Promise<ElderCareData> {
   return normalizeMonitoringData(elder, summary, devices, history);
 }
 
-function normalizeMonitoringData(elder: BackendElder, summary: unknown, devices: BackendDevice[], history: unknown): ElderCareData {
+function normalizeMonitoringData(
+  elder: BackendElder,
+  summary: unknown,
+  devices: BackendDevice[],
+  history: unknown,
+): ElderCareData {
   const root = isObject(summary) ? summary : {};
   const health = isObject(root.health) ? root.health : root;
   const alert = isObject(root.alert) ? root.alert : {};
-  const activity = Array.isArray(root.activityHistory) ? root.activityHistory : Array.isArray(root.activity) ? root.activity : [];
-  const anomalies = Array.isArray(root.anomalyHistory) ? root.anomalyHistory : isObject(history) && Array.isArray(history.items) ? history.items : [];
+  const activity = Array.isArray(root.activityHistory)
+    ? root.activityHistory
+    : Array.isArray(root.activity)
+      ? root.activity
+      : [];
+  const anomalies = Array.isArray(root.anomalyHistory)
+    ? root.anomalyHistory
+    : isObject(history) && Array.isArray(history.items)
+      ? history.items
+      : [];
 
-  const risk = (pickString(health, "risk", "riskLevel", "tingkat_risiko") ?? "Rendah") as AlertLevel;
+  const risk = (pickString(health, "risk", "riskLevel", "tingkat_risiko") ??
+    "Rendah") as AlertLevel;
   const monitoringStatus = elder.monitoringStatus ?? "Aktif";
 
   return {
@@ -503,7 +620,9 @@ function normalizeMonitoringData(elder: BackendElder, summary: unknown, devices:
       name: elder.name,
       age: elder.age ?? calculateAge(elder.birthDate),
       monitoringStatus: monitoringStatus === "Tidak Aktif" ? "Tidak Aktif" : "Aktif",
-      wearableStatus: devices.some((d) => isWearable(d) && isConnected(d)) ? "Terhubung" : "Terputus",
+      wearableStatus: devices.some((d) => isWearable(d) && isConnected(d))
+        ? "Terhubung"
+        : "Terputus",
     },
     health: {
       heartRate: pickNumber(health, "heartRate", "heart_rate", "bpm", "detak_jantung") ?? 0,
@@ -525,7 +644,8 @@ function normalizeMonitoringData(elder: BackendElder, summary: unknown, devices:
       hasAlert: Boolean(root.hasAlert ?? alert.hasAlert ?? alert.id ?? alert.status),
       type: pickString(alert, "type", "jenis", "title", "judul") ?? "Peringatan",
       description: pickString(alert, "description", "deskripsi", "message", "pesan") ?? "",
-      detected: pickString(alert, "detected", "createdAt", "created_at", "timestamp", "waktu") ?? "",
+      detected:
+        pickString(alert, "detected", "createdAt", "created_at", "timestamp", "waktu") ?? "",
       level: (pickString(alert, "level", "severity", "tingkat") ?? risk) as AlertLevel,
     },
     devices: devices.map((device) => ({
@@ -545,11 +665,15 @@ function normalizeMonitoringData(elder: BackendElder, summary: unknown, devices:
 }
 
 function isWearable(device: BackendDevice) {
-  return `${device.kind ?? ""} ${device.type ?? ""} ${device.name ?? ""}`.toLowerCase().includes("wear");
+  return `${device.kind ?? ""} ${device.type ?? ""} ${device.name ?? ""}`
+    .toLowerCase()
+    .includes("wear");
 }
 
 function isConnected(device: BackendDevice) {
-  return ["terhubung", "connected", "aktif", "online"].includes((device.status ?? "").toLowerCase());
+  return ["terhubung", "connected", "aktif", "online"].includes(
+    (device.status ?? "").toLowerCase(),
+  );
 }
 
 function calculateAge(birthDate?: string) {
@@ -562,3 +686,46 @@ function calculateAge(birthDate?: string) {
   if (month < 0 || (month === 0 && now.getDate() < birth.getDate())) age -= 1;
   return age;
 }
+
+// ---------------------------------------------------------------- stream kamera (RTSP)
+
+export interface CameraStream {
+  configured: boolean;
+  host: string;
+  port: number | null;
+  username: string;
+  hasPassword: boolean;
+  path: string;
+  fps: number;
+  enabled: boolean;
+  state: "stopped" | "starting" | "running" | "error";
+  logs: string[];
+  lastSeen: string | null;
+}
+
+export interface CameraStreamInput {
+  host: string;
+  port: number | null;
+  username: string;
+  /** Kosong = pertahankan password lama. */
+  password: string;
+  path: string;
+  fps: number;
+}
+
+const streamPath = (deviceId: string, action = "") =>
+  `/devices/${encodeURIComponent(deviceId)}/stream${action}`;
+
+export const getCameraStream = (deviceId: string) =>
+  backendFetch<CameraStream>(streamPath(deviceId));
+export const saveCameraStream = (deviceId: string, input: CameraStreamInput) =>
+  backendFetch<CameraStream>(streamPath(deviceId), { method: "PUT", body: JSON.stringify(input) });
+export const testCameraStream = (deviceId: string, input: CameraStreamInput) =>
+  backendFetch<{ ok: boolean; message: string }>(streamPath(deviceId, "/test"), {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+export const startCameraStream = (deviceId: string) =>
+  backendFetch<CameraStream>(streamPath(deviceId, "/start"), { method: "POST" });
+export const stopCameraStream = (deviceId: string) =>
+  backendFetch<CameraStream>(streamPath(deviceId, "/stop"), { method: "POST" });

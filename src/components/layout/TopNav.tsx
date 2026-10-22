@@ -35,7 +35,16 @@ function TopNav({ hasNotification = false }: TopNavProps) {
       return;
     }
     if (pathname.startsWith("/admin") && user.role !== "admin") router.replace("/dashboard");
-    if ((pathname.startsWith("/dashboard") || pathname.startsWith("/elderly") || pathname.startsWith("/notifications") || pathname.startsWith("/access")) && user.role === "admin") router.replace("/admin");
+    if (
+      (pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/elderly") ||
+        pathname.startsWith("/notifications") ||
+        pathname.startsWith("/access") ||
+        pathname.startsWith("/devices")) &&
+      user.role === "admin"
+    )
+      router.replace("/admin");
+    if (pathname.startsWith("/devices") && user.role !== "keluarga") router.replace("/dashboard");
     if (pathname.startsWith("/access") && user.role !== "keluarga") router.replace("/dashboard");
   }, [pathname, router, sessionQuery.isPending, user]);
 
@@ -175,6 +184,25 @@ function TopNav({ hasNotification = false }: TopNavProps) {
         >
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
           <path d="M10 21h4" />
+        </svg>
+      ),
+    },
+    {
+      label: "Perangkat",
+      path: "/devices",
+      roles: ["keluarga"],
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <rect x="3" y="5" width="12" height="8" rx="1.5" />
+          <path d="M7 17h4" />
+          <circle cx="19" cy="9" r="3" />
         </svg>
       ),
     },

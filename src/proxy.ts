@@ -19,6 +19,7 @@ export const config = {
     "/elderly/:path*",
     "/notifications/:path*",
     "/access/:path*",
+    "/devices/:path*",
     "/admin/:path*",
     "/profile/:path*",
     "/settings/:path*",
