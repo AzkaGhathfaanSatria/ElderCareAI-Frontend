@@ -46,8 +46,8 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
   const query = useQuery({
     queryKey: ["camera-stream", deviceId],
     queryFn: () => getCameraStream(deviceId),
-    enabled: open,
-    // polling status hanya saat panel terbuka
+    // status selalu diambil sekali agar tombol menampilkan kondisi stream
+    // polling berkala hanya saat panel terbuka
     refetchInterval: open ? 4000 : false,
   });
   const stream = query.data;
@@ -147,9 +147,44 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
 
   return (
     <div className="mt-3 w-full">
-      <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)}>
-        {open ? "Tutup pengaturan stream" : "Pengaturan stream"}
-      </Button>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/5 px-3 py-1 text-left text-xs font-medium text-ink transition-colors hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+      >
+        <span className="flex items-center gap-1.5">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M23 7l-7 5 7 5V7z" />
+            <rect x="1" y="5" width="15" height="14" rx="2" />
+          </svg>
+          {open ? "Tutup pengaturan stream" : "Pengaturan stream"}
+        </span>
+        <span className="flex items-center gap-2">
+          {stream && <Badge variant={st.variant}>{st.text}</Badge>}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
       {open && (
         <div className="mt-3 space-y-4 rounded-xl border border-border p-4">
           {query.isPending ? (
