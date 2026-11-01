@@ -12,7 +12,9 @@ import Card from "../components/ui/Card";
 import EmptyStateMessage from "../components/ui/EmptyStateMessage";
 import TextField from "../components/ui/TextField";
 import { useSession } from "../hooks/useSession";
-import { getAccessGrants, getElders, createAccessGrant, revokeAccessGrant } from "../services/backendApi";
+import { useSelectedElder } from "../hooks/useSelectedElder";
+import ElderSelector from "../components/elderly/ElderSelector";
+import { getAccessGrants, createAccessGrant, revokeAccessGrant } from "../services/backendApi";
 import { getInitials } from "../lib/initials";
 import { type AccessGrantInput, AccessGrantSchema } from "../schemas/accessGrantSchema";
 
@@ -22,8 +24,8 @@ function AccessManagement() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const sessionQuery = useSession();
-  const eldersQuery = useQuery({ queryKey: ["elders"], queryFn: getElders });
-  const elder = eldersQuery.data?.[0];
+  const selection = useSelectedElder();
+  const elder = selection.elders.find((item) => item.id === selection.selectedId);
   const grantsQuery = useQuery({
     queryKey: ["access-grants", elder?.id],
     queryFn: () => getAccessGrants(elder?.id ?? ""),
@@ -74,6 +76,7 @@ function AccessManagement() {
 
   return <div className="min-h-screen bg-paper"><TopNav hasNotification={false} /><main className="min-w-0"><div className="p-4 sm:p-6 lg:p-8">
     <ManagementHeader title="Pengaturan Izin Akses" description={<>Kelola tenaga medis yang boleh melihat data kesehatan {elder?.name ?? "lansia"}.</>} isFormOpen={isFormOpen} onToggleForm={() => { setError(""); setSuccess(""); setIsFormOpen((open) => !open); }} openLabel="+ Beri Akses Baru" />
+    <ElderSelector elders={selection.elders} selectedId={selection.selectedId} onSelect={selection.select} />
     {success && <div className="mb-5 rounded-lg border-l-4 border-safe bg-safe/8 p-4 text-sm text-safe" role="status">{success}</div>}
     {error && <div className="mb-5 rounded-lg border border-danger/25 bg-danger/6 px-4 py-3 text-sm text-danger" role="alert">{error}</div>}
     {isFormOpen && <Card className="mb-6 p-5 sm:p-6"><h2 className="mb-4 font-serif text-base text-ink">Beri Akses Tenaga Medis</h2><form onSubmit={handleSubmit} noValidate className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><TextField id="name" name="name" label="Nama Tenaga Medis" value={form.name} onChange={handleChange} placeholder="Nama (untuk tampilan)" /><TextField id="specialization" name="specialization" label="Spesialisasi/Peran" value={form.specialization} onChange={handleChange} placeholder="Dokter Geriatri" /><TextField id="email" name="email" label="Email Terdaftar" type="email" value={form.email} onChange={handleChange} placeholder="contoh@klinik.id" wrapperClassName="sm:col-span-2" /></div><div className="flex justify-end"><Button type="submit" variant="accent" size="sm" disabled={!elder?.id}>Simpan Akses</Button></div></form></Card>}

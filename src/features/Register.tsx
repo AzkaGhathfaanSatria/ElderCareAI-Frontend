@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, useState } from "react";
-
+import BrandMark from "../components/ui/BrandMark";
 import Button from "../components/ui/Button";
 import TextField from "../components/ui/TextField";
-import { register } from "../services/backendApi";
 import { type RegisterInput, RegisterSchema } from "../schemas/registerSchema";
+import { register } from "../services/backendApi";
 
 function Register() {
   const router = useRouter();
@@ -109,9 +109,7 @@ function Register() {
 
             <div className="relative">
               <div className="mb-8 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent font-serif text-lg text-white shadow-sm">
-                  E
-                </div>
+                <BrandMark size={44} tone="accent" />
 
                 <span className="font-serif text-lg">ElderCare AI</span>
               </div>
@@ -184,9 +182,7 @@ function Register() {
               {/* Mobile Logo */}
               <div className="mb-7 lg:hidden">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ink font-serif text-lg text-paper shadow-sm">
-                    E
-                  </div>
+                  <BrandMark size={44} />
 
                   <div>
                     <p className="font-serif text-lg leading-none text-ink">ElderCare AI</p>

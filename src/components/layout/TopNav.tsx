@@ -3,12 +3,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useUnreadNotifications } from "../../hooks/useUnreadNotifications";
-
 import { useSession } from "../../hooks/useSession";
-import { logout } from "../../services/backendApi";
+import { useUnreadNotifications } from "../../hooks/useUnreadNotifications";
 import { getInitials } from "../../lib/initials";
 import { roleLabel } from "../../lib/userDisplay";
+import { logout } from "../../services/backendApi";
+import BrandMark from "../ui/BrandMark";
 
 interface TopNavProps {
   hasNotification?: boolean;
@@ -286,12 +286,7 @@ function TopNav({ hasNotification = false }: TopNavProps) {
       {/* Baris 1 — identitas & profil */}
       <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink font-serif text-sm text-paper"
-            aria-hidden="true"
-          >
-            E
-          </div>
+          <BrandMark size={36} rounded="rounded-lg" />
 
           <div>
             <p className="font-serif text-base leading-none text-ink">ElderCare AI</p>

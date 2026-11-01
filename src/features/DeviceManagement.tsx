@@ -2,6 +2,9 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, type FormEvent, useState } from "react";
+import CameraStreamPanel from "../components/devices/CameraStreamPanel";
+import PairingQr from "../components/devices/PairingQr";
+import { parseRtsp } from "../components/devices/rtsp";
 import Footer from "../components/layout/Footer";
 import ManagementHeader from "../components/layout/ManagementHeader";
 import TopNav from "../components/layout/TopNav";
@@ -11,19 +14,18 @@ import Card from "../components/ui/Card";
 import EmptyStateMessage from "../components/ui/EmptyStateMessage";
 import { SelectField } from "../components/ui/SelectField";
 import TextField from "../components/ui/TextField";
-import CameraStreamPanel from "../components/devices/CameraStreamPanel";
-import { parseRtsp } from "../components/devices/rtsp";
+import { isWearableKey } from "../lib/pairing";
 import {
+  type BackendDevice,
+  createCamera,
+  createWearable,
   getDevices,
   getElders,
-  createWearable,
-  createCamera,
   pairDevice,
   rotateWearableKey,
   saveCameraStream,
   startCameraStream,
   updateDevice,
-  type BackendDevice,
 } from "../services/backendApi";
 
 type DeviceType = "Wearable" | "Kamera CCTV";
@@ -50,6 +52,20 @@ function DeviceManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const devices = devicesQuery.data ?? [];
+
+  // Nama perangkat harus unik per lansia dan per jenis (wearable/kamera), tanpa membedakan huruf besar-kecil.
+  const isDuplicateName = (name: string, elderId: string, isCamera: boolean, exceptId = "") => {
+    const wanted = name.trim().toLowerCase();
+    return devices.some(
+      (d) =>
+        d.id !== exceptId &&
+        d.elderId === elderId &&
+        /^c-\d+$/.test(d.id) === isCamera &&
+        String(d.deviceId ?? d.name ?? "")
+          .trim()
+          .toLowerCase() === wanted,
+    );
+  };
   const connectedCount = devices.filter((device) =>
     ["terhubung", "connected", "aktif", "online"].includes((device.status ?? "").toLowerCase()),
   ).length;
@@ -77,10 +93,15 @@ function DeviceManagement() {
 
   const saveEdit = async (device: BackendDevice) => {
     if (!editForm.deviceId.trim()) return setError("Nama / ID perangkat wajib diisi.");
+    const isCamera = /^c-\d+$/.test(device.id);
+    const targetElderId = editForm.elderId || device.elderId || "";
+    if (isDuplicateName(editForm.deviceId, targetElderId, isCamera, device.id))
+      return setError(
+        `Sudah ada ${isCamera ? "kamera" : "wearable"} bernama "${editForm.deviceId.trim()}" untuk lansia ini. Pakai nama lain.`,
+      );
     setError("");
     setSavingEdit(true);
     try {
-      const isCamera = /^c-\d+$/.test(device.id);
       await updateDevice(device.id, {
         deviceId: editForm.deviceId.trim(),
         ...(isCamera && editForm.lokasi.trim() ? { lokasi: editForm.lokasi.trim() } : {}),
@@ -153,6 +174,10 @@ function DeviceManagement() {
     const elder = eldersQuery.data?.find((item) => item.id === form.assignedTo);
     if (!elder) return setError("Lansia tidak ditemukan.");
     const isCamera = form.type === "Kamera CCTV";
+    if (isDuplicateName(form.deviceId, elder.id, isCamera))
+      return setError(
+        `${form.type} dengan nama "${form.deviceId.trim()}" sudah terdaftar untuk ${elder.name}. Pakai nama lain.`,
+      );
     const fps = Number(form.fps);
     if (isCamera && form.host.trim() && !(fps >= 0.2 && fps <= 2))
       return setError("Frame per detik harus antara 0,2 dan 2.");
@@ -251,6 +276,7 @@ function DeviceManagement() {
                   Tutup
                 </Button>
               </div>
+              {isWearableKey(newKey.key) && <PairingQr deviceKey={newKey.key} />}
             </div>
           )}
           {error && (

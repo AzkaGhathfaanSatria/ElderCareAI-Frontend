@@ -576,9 +576,10 @@ export function emptyElderCareData(): ElderCareData {
   };
 }
 
-export async function fetchElderCareData(): Promise<ElderCareData> {
+/** Data satu lansia. Tanpa `elderId`, dipakai lansia pertama. Perangkat disaring per lansia. */
+export async function fetchElderCareData(elderId?: string): Promise<ElderCareData> {
   const elders = await getElders();
-  const elder = elders[0];
+  const elder = (elderId ? elders.find((item) => item.id === elderId) : undefined) ?? elders[0];
   if (!elder) return emptyElderCareData();
 
   const [summary, devices, history] = await Promise.all([
@@ -587,7 +588,31 @@ export async function fetchElderCareData(): Promise<ElderCareData> {
     getElderHistory(elder.id).catch(() => null),
   ]);
 
-  return normalizeMonitoringData(elder, summary, devices, history);
+  return normalizeMonitoringData(
+    elder,
+    summary,
+    devices.filter((device) => device.elderId === elder.id),
+    history,
+  );
+}
+
+/** Ringkasan semua lansia yang bisa diakses (untuk daftar di dashboard). */
+export async function fetchEldersOverview(): Promise<ElderCareData[]> {
+  const [elders, devices] = await Promise.all([
+    getElders(),
+    getDevices().catch(() => [] as BackendDevice[]),
+  ]);
+  return Promise.all(
+    elders.map(async (elder) => {
+      const summary = await getElderSummary(elder.id).catch(() => null);
+      return normalizeMonitoringData(
+        elder,
+        summary,
+        devices.filter((device) => device.elderId === elder.id),
+        null,
+      );
+    }),
+  );
 }
 
 function normalizeMonitoringData(
@@ -648,7 +673,8 @@ function normalizeMonitoringData(
         pickString(alert, "detected", "createdAt", "created_at", "timestamp", "waktu") ?? "",
       level: (pickString(alert, "level", "severity", "tingkat") ?? risk) as AlertLevel,
     },
-    devices: devices.map((device) => ({
+    devices: devices.map((device, index) => ({
+      id: device.id || `${device.name ?? "perangkat"}-${index}`,
       name: device.name ?? device.deviceId ?? device.type ?? "Perangkat",
       description: device.kind ?? device.type ?? "Perangkat monitoring",
       status: device.status ?? "Terputus",

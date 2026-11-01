@@ -1,11 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-
-import { type LoginInput, LoginSchema } from "../schemas/authSchema";
+import BrandMark from "../components/ui/BrandMark";
 import TextField from "../components/ui/TextField";
+import { type LoginInput, LoginSchema } from "../schemas/authSchema";
 import { login } from "../services/backendApi";
 
 type LoginFormState =
@@ -78,12 +79,23 @@ function LoginPage() {
         aria-hidden="true"
       />
 
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
+      <div className="mx-auto flex min-h-screen max-w-md animate-fade-up flex-col justify-center px-5 py-8 sm:px-6 sm:py-12">
+        <Link
+          href="/"
+          className="group mb-6 inline-flex w-fit items-center gap-1.5 rounded-full text-sm font-medium text-muted transition-colors duration-200 hover:text-ink focus-visible:text-ink focus-visible:outline-none"
+        >
+          <span
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:-translate-x-0.5"
+          >
+            ←
+          </span>
+          Kembali ke beranda
+        </Link>
+
         {/* Logo */}
-        <div className="mb-10 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ink font-serif text-lg text-paper">
-            E
-          </div>
+        <div className="mb-6 flex items-center gap-3">
+          <BrandMark size={44} />
           <div>
             <p className="font-serif text-lg leading-none text-ink">ElderCare AI</p>
             <p className="mt-1 text-xs tracking-wide text-muted">
@@ -93,16 +105,16 @@ function LoginPage() {
         </div>
 
         {/* Heading */}
-        <header className="mb-8">
+        <header className="mb-6">
           <p className="mb-2 text-sm font-medium text-accent-dark">Selamat datang kembali</p>
-          <h1 className="font-serif text-3xl leading-tight text-ink">
+          <h1 className="font-serif text-2xl leading-tight text-ink sm:text-3xl">
             Yang kamu sayangi,
             <br />
             tetap terpantau.
           </h1>
         </header>
 
-        <div className="rounded-2xl border border-border bg-surface p-7 shadow-[var(--shadow-card-lg)]">
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--shadow-card-lg)] sm:p-7">
           <form onSubmit={handleSubmit} noValidate>
             {formState.status === "error" && (
               <div
@@ -160,7 +172,7 @@ function LoginPage() {
               type="submit"
               disabled={loading}
               aria-label="Masuk ke sistem ElderCare AI"
-              className="w-full rounded-full bg-accent px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-accent px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-accent-dark active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Memproses..." : "Masuk"}
             </button>
@@ -178,14 +190,9 @@ function LoginPage() {
               </button>
             </p>
           </div>
-
-          <div className="mt-7 rounded-xl border border-dashed border-border bg-paper px-4 py-3">
-            <p className="text-xs font-semibold text-ink-soft">Masuk ke akunmu</p>
-            <p className="mt-1 text-xs leading-5 text-muted">Gunakan email dan password yang kamu daftarkan. Lupa password? Pilih "Lupa password?" di atas.</p>
-          </div>
         </div>
 
-        <p className="mt-8 text-center text-xs text-muted">
+        <p className="mt-6 text-center text-xs text-muted">
           ElderCare AI © 2026 · Dibangun untuk keluarga yang peduli
         </p>
       </div>

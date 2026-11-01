@@ -21,6 +21,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ElderCare AI",
   description: "Sistem Monitoring Kesehatan Lansia",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({

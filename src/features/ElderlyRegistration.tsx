@@ -2,13 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, useState } from "react";
-
+import PairingQr from "../components/devices/PairingQr";
+import { parseRtsp } from "../components/devices/rtsp";
+import BrandMark from "../components/ui/BrandMark";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { SelectField, TextAreaField } from "../components/ui/SelectField";
 import TextField from "../components/ui/TextField";
-import { parseRtsp } from "../components/devices/rtsp";
 import { useElderlyMutation } from "../hooks/useElderlyMutation";
+import { isWearableKey } from "../lib/pairing";
 import {
   type ElderlyRegistrationInput,
   ElderlyRegistrationSchema,
@@ -158,9 +160,7 @@ function ElderlyRegistration() {
 
           <div className="mt-6">
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink font-serif text-sm text-paper shadow-sm">
-                E
-              </span>
+              <BrandMark size={36} />
 
               <span className="text-sm font-semibold text-accent-dark">ElderCare AI</span>
             </div>
@@ -233,6 +233,7 @@ function ElderlyRegistration() {
                       {copiedKey === item.key ? "Tersalin ✓" : "Salin"}
                     </Button>
                   </div>
+                  {isWearableKey(item.key) && <PairingQr deviceKey={item.key} />}
                 </div>
               ))}
               <Button

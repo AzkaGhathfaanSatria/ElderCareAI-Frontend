@@ -6,6 +6,7 @@ import BehaviorBaseline from "../components/elderly/BehaviorBaseline";
 import CurrentAlert from "../components/elderly/CurrentAlert";
 import DeviceStatus from "../components/elderly/DeviceStatus";
 import ElderlyProfile from "../components/elderly/ElderlyProfile";
+import ElderSelector from "../components/elderly/ElderSelector";
 import HealthOverview from "../components/elderly/HealthOverview";
 import Footer from "../components/layout/Footer";
 import TopNav from "../components/layout/TopNav";
@@ -14,6 +15,7 @@ import Card from "../components/ui/Card";
 import QueryStateScreen from "../components/ui/QueryStateScreen";
 import { useElderCareQuery } from "../hooks/useElderCareQuery";
 import { useElderRealtime } from "../hooks/useElderRealtime";
+import { useSelectedElder } from "../hooks/useSelectedElder";
 import { useUIStore } from "../store/useUIStore";
 
 function ElderlyDetail() {
@@ -23,7 +25,8 @@ function ElderlyDetail() {
 
   const setSelectedPeriod = useUIStore((state) => state.setSelectedPeriod);
 
-  const monitoringQuery = useElderCareQuery();
+  const selection = useSelectedElder();
+  const monitoringQuery = useElderCareQuery(selection.selectedId, !selection.isLoading);
   useElderRealtime(monitoringQuery.data?.elderly.id);
 
   if (monitoringQuery.isPending || monitoringQuery.isError || !monitoringQuery.data) {
@@ -76,11 +79,18 @@ function ElderlyDetail() {
             </Button>
           </div>
 
+          <ElderSelector
+            elders={selection.elders}
+            selectedId={selection.selectedId}
+            onSelect={selection.select}
+          />
+
           {!hasElder && (
             <Card className="p-6 text-center">
               <h2 className="font-serif text-lg text-ink">Belum ada data lansia</h2>
               <p className="mt-1 text-sm text-muted">
-                Tambahkan lansia terlebih dahulu agar profil, kondisi kesehatan, dan riwayat anomali bisa ditampilkan.
+                Tambahkan lansia terlebih dahulu agar profil, kondisi kesehatan, dan riwayat anomali
+                bisa ditampilkan.
               </p>
             </Card>
           )}
@@ -106,7 +116,6 @@ function ElderlyDetail() {
               />
             </>
           )}
-
         </div>
 
         <Footer />

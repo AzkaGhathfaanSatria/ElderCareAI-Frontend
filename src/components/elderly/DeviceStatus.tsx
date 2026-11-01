@@ -18,7 +18,7 @@ function DeviceStatus({ devices }: DeviceStatusProps) {
       <div className="divide-y divide-border">
         {devices.map((device) => (
           <article
-            key={device.name}
+            key={device.id}
             className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
           >
             <div>

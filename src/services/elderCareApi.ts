@@ -1,1 +1,1 @@
-export { fetchElderCareData } from "./backendApi";
+export { fetchElderCareData, fetchEldersOverview } from "./backendApi";
