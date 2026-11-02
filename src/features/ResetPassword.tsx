@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import Button from "../components/ui/Button";
@@ -36,6 +37,19 @@ export default function ResetPassword() {
   return (
     <main className="min-h-screen bg-paper px-4 py-12">
       <div className="mx-auto max-w-md">
+        <Link
+          href="/login"
+          className="group mb-5 inline-flex w-fit items-center gap-1.5 rounded-full text-sm font-medium text-muted transition-colors duration-200 hover:text-ink focus-visible:text-ink focus-visible:outline-none"
+        >
+          <span
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:-translate-x-0.5"
+          >
+            ←
+          </span>
+          Kembali ke login
+        </Link>
+
         <Card className="p-6">
           <h1 className="font-serif text-2xl text-ink">Buat Password Baru</h1>
 
@@ -44,7 +58,13 @@ export default function ResetPassword() {
               <div className="mt-4 rounded-lg bg-danger/6 p-3 text-sm text-danger" role="alert">
                 Tautan reset tidak lengkap. Minta tautan baru dari halaman Lupa Password.
               </div>
-              <Button type="button" variant="accent" size="md" className="mt-4" onClick={() => router.push("/forgot-password")}>
+              <Button
+                type="button"
+                variant="accent"
+                size="md"
+                className="mt-4"
+                onClick={() => router.push("/forgot-password")}
+              >
                 Minta Tautan Baru
               </Button>
             </>
@@ -54,7 +74,9 @@ export default function ResetPassword() {
             </div>
           ) : (
             <>
-              <p className="mt-2 text-sm leading-6 text-muted">Masukkan password baru untuk akunmu (minimal 8 karakter).</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Masukkan password baru untuk akunmu (minimal 8 karakter).
+              </p>
               {error && (
                 <div className="mt-4 rounded-lg bg-danger/6 p-3 text-sm text-danger" role="alert">
                   {error}
@@ -86,7 +108,13 @@ export default function ResetPassword() {
             </>
           )}
 
-          <Button type="button" variant="secondary" size="sm" className="mt-4" onClick={() => router.push("/login")}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="mt-4"
+            onClick={() => router.push("/login")}
+          >
             ← Kembali ke Login
           </Button>
         </Card>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 
 import "../index.css";
+import AlertWatcher from "../components/alerts/AlertWatcher";
 import QueryProvider from "../providers/QueryProvider";
 
 const fraunces = Fraunces({
@@ -32,7 +33,10 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AlertWatcher />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

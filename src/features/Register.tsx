@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import BrandMark from "../components/ui/BrandMark";
@@ -179,6 +180,19 @@ function Register() {
           {/* Register Section */}
           <section className="flex items-center p-6 sm:p-10" aria-labelledby="register-title">
             <div className="w-full">
+              <Link
+                href="/"
+                className="group mb-5 inline-flex w-fit items-center gap-1.5 rounded-full text-sm font-medium text-muted transition-colors duration-200 hover:text-ink focus-visible:text-ink focus-visible:outline-none"
+              >
+                <span
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:-translate-x-0.5"
+                >
+                  ←
+                </span>
+                Kembali ke beranda
+              </Link>
+
               {/* Mobile Logo */}
               <div className="mb-7 lg:hidden">
                 <div className="flex items-center gap-3">

@@ -23,7 +23,11 @@ function TopNav({ hasNotification = false }: TopNavProps) {
   const user = sessionQuery.data;
   // Sumber kebenaran lonceng: notifikasi belum dibaca. Prop hanya dipakai selagi data belum termuat.
   const unread = useUnreadNotifications(Boolean(user));
-  const showBell = unread === undefined ? hasNotification : unread > 0;
+  // Titik lonceng bergantung pada data klien (cache query), jadi baru dirender setelah mount
+  // supaya HTML server dan klien sama saat hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const showBell = mounted && (unread === undefined ? hasNotification : unread > 0);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
