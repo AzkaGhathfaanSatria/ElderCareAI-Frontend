@@ -86,21 +86,41 @@ function CurrentAlert({ alert }: CurrentAlertProps) {
             <div className="mt-3 flex flex-wrap items-center gap-2 pl-9">
               {awaitingFallAnswer ? (
                 <>
-                  <Button variant="accent" size="sm" disabled={busy} onClick={() => answerFall(true)}>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => answerFall(true)}
+                  >
                     Ya, benar jatuh
                   </Button>
-                  <Button variant="secondary" size="sm" disabled={busy} onClick={() => answerFall(false)}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => answerFall(false)}
+                  >
                     Alarm palsu
                   </Button>
                 </>
               ) : (
                 <>
                   {!inProgress && (
-                    <Button variant="secondary" size="sm" disabled={busy} onClick={() => changeStatus("ditindaklanjuti")}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => changeStatus("ditindaklanjuti")}
+                    >
                       Tandai ditindaklanjuti
                     </Button>
                   )}
-                  <Button variant="secondary" size="sm" disabled={busy} onClick={() => changeStatus("selesai")}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => changeStatus("selesai")}
+                  >
                     Tandai selesai
                   </Button>
                 </>
@@ -115,7 +135,10 @@ function CurrentAlert({ alert }: CurrentAlertProps) {
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 rounded-lg border-l-4 border-safe bg-safe/8 p-4" aria-live="polite">
+        <div
+          className="flex items-center gap-3 rounded-lg border-l-4 border-safe bg-safe/8 p-4"
+          aria-live="polite"
+        >
           <span className="text-safe" aria-hidden="true">
             ✓
           </span>

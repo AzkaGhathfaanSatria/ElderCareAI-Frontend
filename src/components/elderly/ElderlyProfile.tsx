@@ -45,7 +45,6 @@ function ElderlyProfile({ elderly }: ElderlyProfileProps) {
               />
               Wearable {elderly.wearableStatus}
             </span>
-
           </div>
         </div>
       </div>

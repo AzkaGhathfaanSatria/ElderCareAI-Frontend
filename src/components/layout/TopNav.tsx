@@ -192,6 +192,23 @@ function TopNav({ hasNotification = false }: TopNavProps) {
       ),
     },
     {
+      label: "Riwayat",
+      path: "/riwayat",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 8v4l2.5 2" />
+        </svg>
+      ),
+    },
+    {
       label: "Perangkat",
       path: "/devices",
       roles: ["keluarga"],

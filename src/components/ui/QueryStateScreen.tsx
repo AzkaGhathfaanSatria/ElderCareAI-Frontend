@@ -53,33 +53,35 @@ function QueryStateScreen(props: QueryStateScreenProps & { query: QueryLikeState
   if (query.isError) {
     return (
       <div className="min-h-screen bg-paper">
-      <TopNav />
-      <main className="flex min-h-[calc(100vh-113px)] items-center justify-center px-4">
-        <section
-          className="w-full max-w-md rounded-xl border border-danger/25 bg-surface p-6 text-center shadow-sm"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-danger/15 font-bold text-danger">
-            !
-          </div>
-
-          <h1 className="text-lg font-bold text-ink">{errorTitle}</h1>
-
-          <p className="mt-2 text-sm text-muted">{query.error?.message ?? errorFallbackMessage}</p>
-
-          <Button
-            variant="primary"
-            size="sm"
-            className="mt-5"
-            onClick={() => {
-              void query.refetch();
-            }}
+        <TopNav />
+        <main className="flex min-h-[calc(100vh-113px)] items-center justify-center px-4">
+          <section
+            className="w-full max-w-md rounded-xl border border-danger/25 bg-surface p-6 text-center shadow-sm"
+            role="alert"
+            aria-live="assertive"
           >
-            Coba Lagi
-          </Button>
-        </section>
-      </main>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-danger/15 font-bold text-danger">
+              !
+            </div>
+
+            <h1 className="text-lg font-bold text-ink">{errorTitle}</h1>
+
+            <p className="mt-2 text-sm text-muted">
+              {query.error?.message ?? errorFallbackMessage}
+            </p>
+
+            <Button
+              variant="primary"
+              size="sm"
+              className="mt-5"
+              onClick={() => {
+                void query.refetch();
+              }}
+            >
+              Coba Lagi
+            </Button>
+          </section>
+        </main>
       </div>
     );
   }
@@ -87,17 +89,17 @@ function QueryStateScreen(props: QueryStateScreenProps & { query: QueryLikeState
   if (!query.data) {
     return (
       <div className="min-h-screen bg-paper">
-      <TopNav />
-      <main className="flex min-h-[calc(100vh-113px)] items-center justify-center px-4">
-        <section
-          className="w-full max-w-md rounded-xl border border-border bg-surface p-6 text-center shadow-sm"
-          role="status"
-        >
-          <h1 className="text-lg font-bold text-ink">Data Tidak Tersedia</h1>
+        <TopNav />
+        <main className="flex min-h-[calc(100vh-113px)] items-center justify-center px-4">
+          <section
+            className="w-full max-w-md rounded-xl border border-border bg-surface p-6 text-center shadow-sm"
+            role="status"
+          >
+            <h1 className="text-lg font-bold text-ink">Data Tidak Tersedia</h1>
 
-          <p className="mt-2 text-sm text-muted">{emptyMessage}</p>
-        </section>
-      </main>
+            <p className="mt-2 text-sm text-muted">{emptyMessage}</p>
+          </section>
+        </main>
       </div>
     );
   }

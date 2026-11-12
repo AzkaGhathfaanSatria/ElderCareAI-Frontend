@@ -1,5 +1,11 @@
+import {
+  activityStatus,
+  heartRateStatus,
+  riskStatus,
+  sleepStatus,
+  valueOrDash,
+} from "../../lib/healthStatus";
 import type { Health } from "../../types/elderCare";
-import { activityStatus, heartRateStatus, riskStatus, sleepStatus, valueOrDash } from "../../lib/healthStatus";
 import Badge from "../ui/Badge";
 import Card from "../ui/Card";
 

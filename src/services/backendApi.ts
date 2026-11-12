@@ -755,3 +755,51 @@ export const startCameraStream = (deviceId: string) =>
   backendFetch<CameraStream>(streamPath(deviceId, "/start"), { method: "POST" });
 export const stopCameraStream = (deviceId: string) =>
   backendFetch<CameraStream>(streamPath(deviceId, "/stop"), { method: "POST" });
+
+// ---------- Riwayat kondisi ----------
+
+export type ConditionStatus = "aman" | "waspada" | "bahaya" | "tidak_ada_data";
+export type HistoryRange = "6h" | "24h" | "7d" | "30d";
+
+export interface ConditionRecord {
+  id: string;
+  waktu: string;
+  tanggal: string;
+  jam: string;
+  status: ConditionStatus;
+  dataJamAda: boolean;
+  detakRata: number | null;
+  detakMin: number | null;
+  detakMaks: number | null;
+  spo2: number | null;
+  suhu: number | null;
+  hrv: number | null;
+  levelRisiko: string | null;
+  deteksiKamera: number;
+  jatuh: boolean;
+  jumlahAlert: number;
+  ringkasan: string;
+}
+
+export interface ConditionHistory {
+  intervalMenit: number;
+  range: HistoryRange;
+  ringkasan: {
+    total: number;
+    aman: number;
+    waspada: number;
+    bahaya: number;
+    tidakAdaData: number;
+    detakRata: number | null;
+  };
+  items: ConditionRecord[];
+}
+
+export async function getConditionHistory(
+  elderId: string,
+  range: HistoryRange,
+): Promise<ConditionHistory> {
+  return backendFetch<ConditionHistory>(
+    `/elders/${encodeURIComponent(elderId)}/riwayat-kondisi?range=${range}`,
+  );
+}

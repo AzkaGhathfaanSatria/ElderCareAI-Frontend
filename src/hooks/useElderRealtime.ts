@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { getBackendBaseUrl, getStoredToken } from "../services/backendApi";
 
 export function useElderRealtime(elderId?: string) {
@@ -14,7 +14,10 @@ export function useElderRealtime(elderId?: string) {
     const source = new EventSource(
       `${getBackendBaseUrl()}/elders/${encodeURIComponent(elderId)}/stream?access_token=${encodeURIComponent(token)}`,
     );
-    const refresh = () => { void queryClient.invalidateQueries({ queryKey: ["elder-care"] }); void queryClient.invalidateQueries({ queryKey: ["notifications"] }); };
+    const refresh = () => {
+      void queryClient.invalidateQueries({ queryKey: ["elder-care"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    };
     source.onmessage = refresh;
     source.addEventListener("alert", refresh);
     source.addEventListener("vital", refresh);

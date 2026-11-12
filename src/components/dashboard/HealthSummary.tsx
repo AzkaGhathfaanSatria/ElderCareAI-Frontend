@@ -1,6 +1,12 @@
+import {
+  activityStatus,
+  heartRateStatus,
+  riskStatus,
+  sleepStatus,
+  valueOrDash,
+} from "../../lib/healthStatus";
 import type { Health } from "../../types/elderCare";
 import Badge from "../ui/Badge";
-import { activityStatus, heartRateStatus, riskStatus, sleepStatus, valueOrDash } from "../../lib/healthStatus";
 import Card from "../ui/Card";
 
 interface HealthSummaryProps {

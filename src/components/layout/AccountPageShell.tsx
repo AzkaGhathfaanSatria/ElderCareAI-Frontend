@@ -2,12 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-
+import Button from "../ui/Button";
+import InlineNotice from "../ui/InlineNotice";
 import Footer from "./Footer";
 import PageHeaderBar from "./PageHeaderBar";
 import TopNav from "./TopNav";
-import Button from "../ui/Button";
-import InlineNotice from "../ui/InlineNotice";
 
 interface AccountPageShellProps {
   title: string;
