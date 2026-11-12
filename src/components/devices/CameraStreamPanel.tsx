@@ -333,12 +333,15 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
                     </span>
                     <div className="flex flex-wrap items-center gap-2">
                       {deteksi.length > 0 ? (
-                        deteksi.map((d, idx) => {
+                        deteksi.map((d) => {
                           const isFall =
                             d.kelas.toLowerCase().includes("fall") &&
                             !d.kelas.toLowerCase().startsWith("non");
                           return (
-                            <Badge key={`${d.kelas}-${idx}`} variant={isFall ? "danger" : "success"}>
+                            <Badge
+                              key={`${d.kelas}-${d.confidence}`}
+                              variant={isFall ? "danger" : "success"}
+                            >
                               {d.kelas} {(d.confidence * 100).toFixed(0)}%
                             </Badge>
                           );
