@@ -5,7 +5,9 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import {
   type CameraStream,
   type CameraStreamInput,
+  getCameraMjpegUrl,
   getCameraStream,
+  getCameraStreamTicket,
   saveCameraStream,
   startCameraStream,
   stopCameraStream,
@@ -43,14 +45,31 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
   const [busy, setBusy] = useState<"" | "save" | "test" | "toggle">("");
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const [streamReady, setStreamReady] = useState(false);
+
   const query = useQuery({
     queryKey: ["camera-stream", deviceId],
     queryFn: () => getCameraStream(deviceId),
     // status selalu diambil sekali agar tombol menampilkan kondisi stream
     // polling berkala hanya saat panel terbuka
-    refetchInterval: open ? 4000 : false,
+    refetchInterval: open ? 2000 : false,
   });
   const stream = query.data;
+  const isStreamActive = Boolean(
+    stream && (stream.enabled || stream.state === "running" || stream.state === "starting"),
+  );
+  const ticketQuery = useQuery({
+    queryKey: ["camera-ticket", deviceId, stream?.enabled],
+    queryFn: () => getCameraStreamTicket(deviceId),
+    enabled: open && isStreamActive,
+    staleTime: 4 * 60_000,
+    refetchInterval: 4 * 60_000,
+  });
+  const mjpegUrl =
+    open && isStreamActive && ticketQuery.data?.ticket
+      ? getCameraMjpegUrl(deviceId, ticketQuery.data.ticket)
+      : null;
+  const deteksi = stream?.deteksi ?? [];
 
   // isi form dari server sekali (password tidak pernah dikirim balik)
   const [loaded, setLoaded] = useState(false);
@@ -300,6 +319,64 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
                 <p className={`text-sm ${notice.ok ? "text-safe" : "text-danger"}`} role="status">
                   {notice.text}
                 </p>
+              )}
+              {isStreamActive && (
+                <div className="space-y-2 rounded-lg border border-border bg-ink/[0.02] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="flex items-center gap-2 font-medium text-ink">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          streamReady ? "animate-pulse bg-safe" : "bg-warning"
+                        }`}
+                      />
+                      Livecam CCTV (MJPEG ~15 FPS)
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {deteksi.length > 0 ? (
+                        deteksi.map((d) => {
+                          const isFall =
+                            d.kelas.toLowerCase().includes("fall") &&
+                            !d.kelas.toLowerCase().startsWith("non");
+                          return (
+                            <Badge
+                              key={`${d.kelas}-${d.confidence}`}
+                              variant={isFall ? "danger" : "success"}
+                            >
+                              {d.kelas} {(d.confidence * 100).toFixed(0)}%
+                            </Badge>
+                          );
+                        })
+                      ) : stream?.state === "running" ? (
+                        <Badge variant="neutral">Tidak ada orang terdeteksi</Badge>
+                      ) : null}
+                      {stream?.lastSeen && (
+                        <span className="text-muted">
+                          AI: {new Date(stream.lastSeen).toLocaleTimeString("id-ID")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {mjpegUrl ? (
+                    <div className="relative overflow-hidden rounded-lg bg-black">
+                      {!streamReady && (
+                        <div className="absolute inset-0 flex items-center justify-center text-xs text-white/70">
+                          Menghubungkan stream livecam...
+                        </div>
+                      )}
+                      <img
+                        src={mjpegUrl}
+                        alt="Livecam CCTV"
+                        onLoad={() => setStreamReady(true)}
+                        onError={() => setStreamReady(false)}
+                        className="aspect-video w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-ink/[0.05] text-xs text-muted">
+                      Menyiapkan livecam...
+                    </div>
+                  )}
+                </div>
               )}
               {stream && stream.logs.length > 0 && (
                 <details className="text-xs text-muted">
