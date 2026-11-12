@@ -727,6 +727,7 @@ export interface CameraStream {
   state: "stopped" | "starting" | "running" | "error";
   logs: string[];
   lastSeen: string | null;
+  deteksi?: Array<{ kelas: string; confidence: number }>;
 }
 
 export interface CameraStreamInput {
@@ -751,6 +752,10 @@ const streamPath = (deviceId: string, action = "") =>
 
 export const getCameraStream = (deviceId: string) =>
   backendFetch<CameraStream>(streamPath(deviceId));
+export const getCameraStreamTicket = (deviceId: string) =>
+  backendFetch<{ ticket: string }>(streamPath(deviceId, "/ticket"), { method: "POST" });
+export const getCameraMjpegUrl = (deviceId: string, ticket: string) =>
+  `${API_BASE_URL}${streamPath(deviceId, "/mjpeg")}?ticket=${encodeURIComponent(ticket)}`;
 export const getCameraFrame = (deviceId: string) =>
   backendFetch<CameraFrame>(streamPath(deviceId, "/frame"));
 export const saveCameraStream = (deviceId: string, input: CameraStreamInput) =>

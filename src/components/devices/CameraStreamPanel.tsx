@@ -5,8 +5,9 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import {
   type CameraStream,
   type CameraStreamInput,
-  getCameraFrame,
+  getCameraMjpegUrl,
   getCameraStream,
+  getCameraStreamTicket,
   saveCameraStream,
   startCameraStream,
   stopCameraStream,
@@ -44,25 +45,31 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
   const [busy, setBusy] = useState<"" | "save" | "test" | "toggle">("");
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const [streamReady, setStreamReady] = useState(false);
+
   const query = useQuery({
     queryKey: ["camera-stream", deviceId],
     queryFn: () => getCameraStream(deviceId),
     // status selalu diambil sekali agar tombol menampilkan kondisi stream
     // polling berkala hanya saat panel terbuka
-    refetchInterval: open ? 4000 : false,
+    refetchInterval: open ? 2000 : false,
   });
   const stream = query.data;
   const isStreamActive = Boolean(
     stream && (stream.enabled || stream.state === "running" || stream.state === "starting"),
   );
-  const frameIntervalMs = Math.max(500, Math.round(1000 / Math.max(0.2, stream?.fps || 1)));
-  const frameQuery = useQuery({
-    queryKey: ["camera-frame", deviceId],
-    queryFn: () => getCameraFrame(deviceId),
+  const ticketQuery = useQuery({
+    queryKey: ["camera-ticket", deviceId, stream?.enabled],
+    queryFn: () => getCameraStreamTicket(deviceId),
     enabled: open && isStreamActive,
-    refetchInterval: open && isStreamActive ? frameIntervalMs : false,
+    staleTime: 4 * 60_000,
+    refetchInterval: 4 * 60_000,
   });
-  const frame = frameQuery.data;
+  const mjpegUrl =
+    open && isStreamActive && ticketQuery.data?.ticket
+      ? getCameraMjpegUrl(deviceId, ticketQuery.data.ticket)
+      : null;
+  const deteksi = stream?.deteksi ?? [];
 
   // isi form dari server sekali (password tidak pernah dikirim balik)
   const [loaded, setLoaded] = useState(false);
@@ -319,43 +326,51 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
                     <span className="flex items-center gap-2 font-medium text-ink">
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          frame?.available ? "animate-pulse bg-safe" : "bg-warning"
+                          streamReady ? "animate-pulse bg-safe" : "bg-warning"
                         }`}
                       />
-                      Livecam CCTV
+                      Livecam CCTV (MJPEG ~15 FPS)
                     </span>
                     <div className="flex flex-wrap items-center gap-2">
-                      {frame?.available && frame.deteksi.length > 0 ? (
-                        frame.deteksi.map((d, idx) => {
-                          const isFall = d.kelas.toLowerCase().includes("fall") && !d.kelas.toLowerCase().startsWith("non");
+                      {deteksi.length > 0 ? (
+                        deteksi.map((d, idx) => {
+                          const isFall =
+                            d.kelas.toLowerCase().includes("fall") &&
+                            !d.kelas.toLowerCase().startsWith("non");
                           return (
-                            <Badge
-                              key={`${d.kelas}-${idx}`}
-                              variant={isFall ? "danger" : "success"}
-                            >
+                            <Badge key={`${d.kelas}-${idx}`} variant={isFall ? "danger" : "success"}>
                               {d.kelas} {(d.confidence * 100).toFixed(0)}%
                             </Badge>
                           );
                         })
-                      ) : frame?.available ? (
+                      ) : stream?.state === "running" ? (
                         <Badge variant="neutral">Tidak ada orang terdeteksi</Badge>
                       ) : null}
-                      {frame?.updatedAt && (
+                      {stream?.lastSeen && (
                         <span className="text-muted">
-                          {new Date(frame.updatedAt).toLocaleTimeString("id-ID")}
+                          AI: {new Date(stream.lastSeen).toLocaleTimeString("id-ID")}
                         </span>
                       )}
                     </div>
                   </div>
-                  {frame?.available && frame.image ? (
-                    <img
-                      src={frame.image}
-                      alt="Livecam CCTV"
-                      className="aspect-video w-full rounded-lg bg-black object-contain"
-                    />
+                  {mjpegUrl ? (
+                    <div className="relative overflow-hidden rounded-lg bg-black">
+                      {!streamReady && (
+                        <div className="absolute inset-0 flex items-center justify-center text-xs text-white/70">
+                          Menghubungkan stream livecam...
+                        </div>
+                      )}
+                      <img
+                        src={mjpegUrl}
+                        alt="Livecam CCTV"
+                        onLoad={() => setStreamReady(true)}
+                        onError={() => setStreamReady(false)}
+                        className="aspect-video w-full object-contain"
+                      />
+                    </div>
                   ) : (
                     <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-ink/[0.05] text-xs text-muted">
-                      Menunggu frame pertama dari kamera...
+                      Menyiapkan livecam...
                     </div>
                   )}
                 </div>
