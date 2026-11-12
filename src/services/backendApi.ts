@@ -739,11 +739,20 @@ export interface CameraStreamInput {
   fps: number;
 }
 
+export interface CameraFrame {
+  available: boolean;
+  image: string | null;
+  updatedAt: string | null;
+  deteksi: Array<{ kelas: string; confidence: number }>;
+}
+
 const streamPath = (deviceId: string, action = "") =>
   `/devices/${encodeURIComponent(deviceId)}/stream${action}`;
 
 export const getCameraStream = (deviceId: string) =>
   backendFetch<CameraStream>(streamPath(deviceId));
+export const getCameraFrame = (deviceId: string) =>
+  backendFetch<CameraFrame>(streamPath(deviceId, "/frame"));
 export const saveCameraStream = (deviceId: string, input: CameraStreamInput) =>
   backendFetch<CameraStream>(streamPath(deviceId), { method: "PUT", body: JSON.stringify(input) });
 export const testCameraStream = (deviceId: string, input: CameraStreamInput) =>

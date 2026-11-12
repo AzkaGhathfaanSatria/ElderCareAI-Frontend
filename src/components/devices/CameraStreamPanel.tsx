@@ -5,6 +5,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import {
   type CameraStream,
   type CameraStreamInput,
+  getCameraFrame,
   getCameraStream,
   saveCameraStream,
   startCameraStream,
@@ -51,6 +52,17 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
     refetchInterval: open ? 4000 : false,
   });
   const stream = query.data;
+  const isStreamActive = Boolean(
+    stream && (stream.enabled || stream.state === "running" || stream.state === "starting"),
+  );
+  const frameIntervalMs = Math.max(500, Math.round(1000 / Math.max(0.2, stream?.fps || 1)));
+  const frameQuery = useQuery({
+    queryKey: ["camera-frame", deviceId],
+    queryFn: () => getCameraFrame(deviceId),
+    enabled: open && isStreamActive,
+    refetchInterval: open && isStreamActive ? frameIntervalMs : false,
+  });
+  const frame = frameQuery.data;
 
   // isi form dari server sekali (password tidak pernah dikirim balik)
   const [loaded, setLoaded] = useState(false);
@@ -300,6 +312,53 @@ export default function CameraStreamPanel({ deviceId }: { deviceId: string }) {
                 <p className={`text-sm ${notice.ok ? "text-safe" : "text-danger"}`} role="status">
                   {notice.text}
                 </p>
+              )}
+              {isStreamActive && (
+                <div className="space-y-2 rounded-lg border border-border bg-ink/[0.02] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="flex items-center gap-2 font-medium text-ink">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          frame?.available ? "animate-pulse bg-safe" : "bg-warning"
+                        }`}
+                      />
+                      Livecam CCTV
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {frame?.available && frame.deteksi.length > 0 ? (
+                        frame.deteksi.map((d, idx) => {
+                          const isFall = d.kelas.toLowerCase().includes("fall") && !d.kelas.toLowerCase().startsWith("non");
+                          return (
+                            <Badge
+                              key={`${d.kelas}-${idx}`}
+                              variant={isFall ? "danger" : "success"}
+                            >
+                              {d.kelas} {(d.confidence * 100).toFixed(0)}%
+                            </Badge>
+                          );
+                        })
+                      ) : frame?.available ? (
+                        <Badge variant="neutral">Tidak ada orang terdeteksi</Badge>
+                      ) : null}
+                      {frame?.updatedAt && (
+                        <span className="text-muted">
+                          {new Date(frame.updatedAt).toLocaleTimeString("id-ID")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {frame?.available && frame.image ? (
+                    <img
+                      src={frame.image}
+                      alt="Livecam CCTV"
+                      className="aspect-video w-full rounded-lg bg-black object-contain"
+                    />
+                  ) : (
+                    <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-ink/[0.05] text-xs text-muted">
+                      Menunggu frame pertama dari kamera...
+                    </div>
+                  )}
+                </div>
               )}
               {stream && stream.logs.length > 0 && (
                 <details className="text-xs text-muted">
